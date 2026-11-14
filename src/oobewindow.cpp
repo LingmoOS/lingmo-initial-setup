@@ -101,8 +101,11 @@ public:
 protected:
     void layout() override
     {
-        for (View* page : m_pages)
-            page->setGeometry(localRect());
+        const RectF bounds = localRect();
+        for (View* page : m_pages) {
+            const double height = std::min(bounds.height, page->heightForWidth(bounds.width));
+            page->setGeometry({0, 0, bounds.width, std::max(0.0, height)});
+        }
     }
 
 private:
