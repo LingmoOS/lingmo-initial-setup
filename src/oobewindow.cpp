@@ -17,6 +17,7 @@
 #include "ui/check_box.h"
 #include "ui/dialog_window.h"
 #include "ui/fast_blur.h"
+#include "ui/icon.h"
 #include "ui/image_view.h"
 #include "ui/label.h"
 #include "ui/painter.h"
@@ -64,6 +65,57 @@ private:
     size_t m_current = 0;
 };
 
+class PageVisual final : public View
+{
+public:
+    explicit PageVisual(std::string wallpaper)
+        : m_wallpaper(addChild<ImageView>(std::move(wallpaper)))
+        , m_icon(addChild<ThemeIcon>("preferences-desktop-locale", 92))
+    {
+        m_wallpaper->setFillMode(ImageView::FillMode::PreserveAspectCrop);
+        m_wallpaper->setCornerRadius(118, themeCorners());
+        m_icon->setColor(ColorId::Text);
+        m_icon->setVisible(false);
+    }
+
+    void setWallpaper(std::string wallpaper)
+    {
+        m_wallpaper->setSource(std::move(wallpaper));
+        m_wallpaper->requestPaint();
+    }
+
+    void setPage(size_t page)
+    {
+        static constexpr const char* icons[] = {
+            "", "preferences-desktop-locale", "preferences-desktop-appearance", "emblem-checked"};
+        m_wallpaper->setVisible(page == 0);
+        m_icon->setVisible(page != 0);
+        if (page != 0)
+            m_icon->setIconName(icons[std::min(page, size_t(3))]);
+        requestPaint();
+    }
+
+protected:
+    void layout() override
+    {
+        m_wallpaper->setGeometry(localRect());
+        m_icon->setGeometry(localRect());
+    }
+
+    void paint(Painter& painter) override
+    {
+        if (!m_icon->isVisible())
+            return;
+        const Theme& theme = Theme::current();
+        const RectF circle = localRect().adjusted(24, 24, -24, -24);
+        painter.fillEllipse(circle, theme.highlight.withAlpha(theme.darkMode ? 0.20 : 0.12));
+    }
+
+private:
+    ImageView* m_wallpaper;
+    ThemeIcon* m_icon;
+};
+
 class SetupCard final : public View
 {
 public:
@@ -79,11 +131,13 @@ public:
         m_row->setPadding({56, 48, 56, 48});
         m_row->setSpacing(48);
 
-        m_logo = m_row->addChild<ImageView>(std::string(OOBE_DATA_DIR) + "/images/logo.svg");
-        m_logo->setFillMode(ImageView::FillMode::PreserveAspectFit);
-        m_logo->setCornerRadius(28, themeCorners());
-        m_logo->setLayoutHints({.preferredWidth = 236, .preferredHeight = 236,
-                                .verticalAlignment = Alignment::Center});
+        std::string wallpaper = m_appearance.wallpaper();
+        std::error_code error;
+        if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper, error))
+            wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
+        m_visual = m_row->addChild<PageVisual>(std::move(wallpaper));
+        m_visual->setLayoutHints({.preferredWidth = 236, .preferredHeight = 236,
+                                  .verticalAlignment = Alignment::Center});
 
         m_panel = m_row->addChild<ColumnLayout>();
         m_panel->setLayoutHints({.fillWidth = true, .fillHeight = true});
@@ -125,6 +179,9 @@ public:
         };
 
         showPage(0);
+        m_appearanceChanged = m_appearance.changed.connect([this] {
+            updateWallpaper();
+        });
     }
 
 protected:
@@ -197,16 +254,27 @@ private:
         m_title->setText(titles[page]);
         m_subtitle->setText(subtitles[page]);
         m_pages->setCurrent(page);
+        m_visual->setPage(page);
         m_back->setVisible(page > 0);
         m_next->setText(page + 1 == kPageCount ? "Finish" : "Continue");
         requestLayout();
         requestPaint();
     }
 
+    void updateWallpaper()
+    {
+        std::string wallpaper = m_appearance.wallpaper();
+        std::error_code error;
+        if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper, error))
+            wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
+        m_visual->setWallpaper(std::move(wallpaper));
+    }
+
     Lingmo::appearance::Appearance& m_appearance;
+    base::Subscription m_appearanceChanged;
     std::function<void()> m_onComplete;
     RowLayout* m_row = nullptr;
-    ImageView* m_logo = nullptr;
+    PageVisual* m_visual = nullptr;
     ColumnLayout* m_panel = nullptr;
     Label* m_title = nullptr;
     Label* m_subtitle = nullptr;

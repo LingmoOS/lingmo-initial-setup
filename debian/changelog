@@ -1,3 +1,15 @@
+lingmo-oobe (1.1.4+lingmo1) unstable; urgency=medium
+
+  * Use themed monochrome icons for non-welcome setup pages.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 06:45:00 +0800
+
+lingmo-oobe (1.1.3+lingmo1) unstable; urgency=medium
+
+  * Use the wallpaper as the welcome visual and page-specific monochrome icons.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 06:30:00 +0800
+
 lingmo-oobe (1.1.2+lingmo1) unstable; urgency=medium
 
   * Refresh the blurred backdrop when Appearance reports the active wallpaper.
