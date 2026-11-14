@@ -242,13 +242,17 @@ public:
         , m_description(m_text->addChild<Label>(std::move(description)))
         , m_check(m_row->addChild<Icon>("check", 18))
     {
-        m_row->setPadding({16, 12, 16, 12});
-        m_row->setSpacing(14);
+        m_row->setPadding({14, 8, 14, 8});
+        m_row->setSpacing(12);
         m_row->setLayoutHints({.fillWidth = true, .fillHeight = true});
         m_text->setLayoutHints({.fillWidth = true, .fillHeight = true});
         m_title->setWeight(500);
+        m_title->setWrap(true);
+        m_title->setMaximumLineCount(2);
         m_description->setColor(ColorId::DisabledText);
         m_description->setFontSize(12);
+        m_description->setWrap(true);
+        m_description->setMaximumLineCount(2);
         m_check->setColor(ColorId::Highlight);
         m_check->setVisible(false);
         setTracksHover(true);
@@ -453,7 +457,7 @@ private:
     static std::unique_ptr<ColumnLayout> page(std::string text)
     {
         auto result = std::make_unique<ColumnLayout>();
-        result->setSpacing(Theme::current().mediumSpacing);
+        result->setSpacing(8);
         auto* body = result->addChild<Label>(std::move(text));
         body->setWrap(true);
         body->setFontSize(16);
@@ -468,8 +472,8 @@ private:
         m_english = language->addChild<ChoiceCard>("applications-education-language", "English (United States)",
                                                     "Use English throughout the desktop");
         m_chinese = language->addChild<ChoiceCard>("globe", "中文（简体）", "使用简体中文显示系统界面");
-        m_english->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
-        m_chinese->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_english->setLayoutHints({.fillWidth = true, .preferredHeight = 60});
+        m_chinese->setLayoutHints({.fillWidth = true, .preferredHeight = 60});
         m_english->setSelected(true);
         m_english->onClicked = [this] { selectLanguage(m_english); };
         m_chinese->onClicked = [this] { selectLanguage(m_chinese); };
@@ -479,8 +483,8 @@ private:
         m_usKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "English (US)",
                                                        "QWERTY keyboard layout");
         m_pinyinKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "中文拼音", "Chinese Pinyin input");
-        m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
-        m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 60});
+        m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 60});
         m_usKeyboard->setSelected(true);
         m_usKeyboard->onClicked = [this] { selectKeyboard(m_usKeyboard); };
         m_pinyinKeyboard->onClicked = [this] { selectKeyboard(m_pinyinKeyboard); };
@@ -506,8 +510,8 @@ private:
                                                               "Bright surfaces with clear contrast");
         m_darkAppearance = appearance->addChild<ChoiceCard>("zorin-appearance", "Dark appearance",
                                                              "A darker palette for dim environments");
-        m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
-        m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 60});
+        m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 60});
         m_lightAppearance->onClicked = [this] { chooseAppearance(false); };
         m_darkAppearance->onClicked = [this] { chooseAppearance(true); };
         updateAppearanceChoices();
