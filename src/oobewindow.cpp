@@ -25,6 +25,7 @@
 #include "ui/label.h"
 #include "ui/painter.h"
 #include "ui/theme.h"
+#include "ui/text_area.h"
 #include "ui/view.h"
 
 #include "oobestate.h"
@@ -165,7 +166,7 @@ public:
         if (page == m_page)
             return;
         static constexpr const char* icons[] = {
-            "", "applications-education-language", "input-keyboard", "preferences-system-time",
+            "", "text-x-generic", "input-keyboard", "preferences-system-time",
             "network-wireless", "zorin-appearance", "emblem-checked"};
         View* oldView = m_page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
         View* newView = page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
@@ -475,18 +476,27 @@ private:
     {
         m_pages->addPage(page("A calm, capable desktop for your everyday work.\n\nThis setup takes a few moments and can be changed later in Settings."));
 
-        auto language = page("Choose the language and region you want to use during this session.");
-        m_english = language->addChild<ChoiceCard>("applications-education-language", "English (United States)",
-                                                    "Use English throughout the desktop");
-        m_chinese = language->addChild<ChoiceCard>("globe", "中文（简体）", "使用简体中文显示系统界面");
-        m_english->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
-                                   .verticalAlignment = Alignment::Start});
-        m_chinese->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
-                                   .verticalAlignment = Alignment::Start});
-        m_english->setSelected(true);
-        m_english->onClicked = [this] { selectLanguage(m_english); };
-        m_chinese->onClicked = [this] { selectLanguage(m_chinese); };
-        m_pages->addPage(std::move(language));
+        auto agreement = page("Please review the Lingmo Aurora service agreement before continuing.");
+        auto* agreementTitle = agreement->addChild<Label>("Lingmo Aurora Service Agreement");
+        agreementTitle->setWeight(600);
+        auto* effective = agreement->addChild<Label>("Effective date: 2026-11-01");
+        effective->setColor(ColorId::DisabledText);
+        auto* text = agreement->addChild<TextArea>(
+                "Lingmo Aurora Service Agreement\n\n"
+                "Before using Lingmo Aurora or any service provided with it, please read this agreement carefully. "
+                "By installing or using the system, you agree to the terms and conditions described here.\n\n"
+                "The system may include third-party services and software. Their respective terms and notices remain "
+                "available in Settings. You can review or change your preferences after setup.");
+        text->setReadOnly(true);
+        text->setWrapMode(TextArea::WrapMode::WordWrap);
+        text->setFrameVisible(true);
+        text->setPadding({12, 10, 12, 10});
+        text->setLayoutHints({.fillWidth = true, .preferredHeight = 180, .maximumHeight = 220});
+        m_agreementAccepted = agreement->addChild<CheckBox>("I agree to the Lingmo Aurora service agreement");
+        m_agreementAccepted->onToggled = [this](bool accepted) {
+            m_next->setEnabled(accepted);
+        };
+        m_pages->addPage(std::move(agreement));
 
         auto keyboard = page("Select the keyboard layout you use most often. You can add more layouts later in Settings.");
         m_usKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "English (US)",
@@ -538,7 +548,7 @@ private:
         m_page = page;
         static constexpr const char* titles[] = {
             "Welcome to Lingmo Aurora",
-            "Language & region",
+            "Service agreement",
             "Keyboard layout",
             "Time & date",
             "Network access",
@@ -547,7 +557,7 @@ private:
         };
         static constexpr const char* subtitles[] = {
             "Let's get your new desktop ready.",
-            "These choices apply to your first session.",
+            "Review the terms before continuing.",
             "Choose your primary input method.",
             "Keep your clock in sync.",
             "Connect after you enter the desktop.",
@@ -562,6 +572,7 @@ private:
         m_visual->setPage(page);
         m_back->setVisible(page > 0);
         m_next->setText(page + 1 == kPageCount ? "Finish" : "Continue");
+        m_next->setEnabled(page != 1 || (m_agreementAccepted && m_agreementAccepted->isChecked()));
         requestLayout();
         requestPaint();
     }
@@ -573,12 +584,6 @@ private:
         if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper, error))
             wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
         m_visual->setWallpaper(std::move(wallpaper));
-    }
-
-    void selectLanguage(ChoiceCard* selected)
-    {
-        m_english->setSelected(selected == m_english);
-        m_chinese->setSelected(selected == m_chinese);
     }
 
     void selectKeyboard(ChoiceCard* selected)
@@ -615,8 +620,7 @@ private:
     RowLayout* m_actions = nullptr;
     DialogButton* m_back = nullptr;
     DialogButton* m_next = nullptr;
-    ChoiceCard* m_english = nullptr;
-    ChoiceCard* m_chinese = nullptr;
+    CheckBox* m_agreementAccepted = nullptr;
     ChoiceCard* m_usKeyboard = nullptr;
     ChoiceCard* m_pinyinKeyboard = nullptr;
     ChoiceCard* m_lightAppearance = nullptr;
@@ -648,8 +652,8 @@ protected:
     void layout() override
     {
         const RectF bounds = localRect();
-        const double margin = 32;
-        const double cardWidth = std::min(1040.0, std::max(0.0, bounds.width - 2 * margin));
+        const double margin = 64;
+        const double cardWidth = std::min(960.0, std::max(0.0, bounds.width - 2 * margin));
         const double cardHeight = std::min(640.0, std::max(0.0, bounds.height - 2 * margin));
         m_wallpaper->setGeometry(bounds);
         m_tint->setGeometry(bounds);
