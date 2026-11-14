@@ -1,3 +1,9 @@
+lingmo-oobe (1.2.1+lingmo1) unstable; urgency=medium
+
+  * Replace simple setup toggles with selectable option cards.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 09:00:00 +0800
+
 lingmo-oobe (1.2.0+lingmo1) unstable; urgency=medium
 
   * Expand the first-run wizard with keyboard, time, network and appearance pages.

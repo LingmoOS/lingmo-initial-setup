@@ -231,6 +231,88 @@ private:
     std::unique_ptr<Animation> m_transition;
 };
 
+class ChoiceCard final : public View
+{
+public:
+    ChoiceCard(std::string icon, std::string title, std::string description)
+        : m_row(addChild<RowLayout>())
+        , m_icon(m_row->addChild<ThemeIcon>(std::move(icon), 30))
+        , m_text(m_row->addChild<ColumnLayout>())
+        , m_title(m_text->addChild<Label>(std::move(title)))
+        , m_description(m_text->addChild<Label>(std::move(description)))
+        , m_check(m_row->addChild<Icon>("check", 18))
+    {
+        m_row->setPadding({16, 12, 16, 12});
+        m_row->setSpacing(14);
+        m_row->setLayoutHints({.fillWidth = true, .fillHeight = true});
+        m_text->setLayoutHints({.fillWidth = true, .fillHeight = true});
+        m_title->setWeight(500);
+        m_description->setColor(ColorId::DisabledText);
+        m_description->setFontSize(12);
+        m_check->setColor(ColorId::Highlight);
+        m_check->setVisible(false);
+        setTracksHover(true);
+    }
+
+    void setSelected(bool selected)
+    {
+        if (selected == m_selected)
+            return;
+        m_selected = selected;
+        m_check->setVisible(selected);
+        requestPaint();
+    }
+
+    bool isSelected() const { return m_selected; }
+    std::function<void()> onClicked;
+    bool acceptsPointer() const override { return true; }
+
+protected:
+    void layout() override { m_row->setGeometry(localRect()); }
+
+    void paint(Painter& painter) override
+    {
+        const Theme& theme = Theme::current();
+        Color fill = theme.secondBackground.withAlpha(theme.darkMode ? 0.68 : 0.76);
+        Color border = theme.text.withAlpha(theme.darkMode ? 0.10 : 0.12);
+        if (m_selected) {
+            fill = theme.highlight.withAlpha(theme.darkMode ? 0.24 : 0.14);
+            border = theme.highlight.withAlpha(0.72);
+        } else if (isHovered()) {
+            fill = theme.alternateBackground.withAlpha(theme.darkMode ? 0.82 : 0.92);
+        }
+        painter.drawRoundedRect(localRect(), {theme.mediumRadius, 0, themeCorners()}, fill,
+                                1 / painter.scale(), border);
+    }
+
+    void pointerPress(const PointerEvent& event) override
+    {
+        if (event.button == MouseButton::Left)
+            m_pressed = true;
+    }
+
+    void pointerRelease(const PointerEvent& event) override
+    {
+        if (!m_pressed)
+            return;
+        m_pressed = false;
+        if (event.button == MouseButton::Left && localRect().contains(event.position) && onClicked)
+            onClicked();
+    }
+
+    void hoverChanged() override { requestPaint(); }
+
+private:
+    RowLayout* m_row;
+    ThemeIcon* m_icon;
+    ColumnLayout* m_text;
+    Label* m_title;
+    Label* m_description;
+    Icon* m_check;
+    bool m_selected = false;
+    bool m_pressed = false;
+};
+
 class StepIndicator final : public View
 {
 public:
@@ -335,6 +417,7 @@ public:
         showPage(0);
         m_appearanceChanged = m_appearance.changed.connect([this] {
             updateWallpaper();
+            updateAppearanceChoices();
         });
     }
 
@@ -382,19 +465,25 @@ private:
         m_pages->addPage(page("A calm, capable desktop for your everyday work.\n\nThis setup takes a few moments and can be changed later in Settings."));
 
         auto language = page("Choose the language and region you want to use during this session.");
-        auto* english = language->addChild<RadioButton>("English (United States)");
-        auto* chinese = language->addChild<RadioButton>("中文（简体）");
-        m_languageGroup.add(english);
-        m_languageGroup.add(chinese);
-        english->setChecked(true);
+        m_english = language->addChild<ChoiceCard>("applications-education-language", "English (United States)",
+                                                    "Use English throughout the desktop");
+        m_chinese = language->addChild<ChoiceCard>("globe", "中文（简体）", "使用简体中文显示系统界面");
+        m_english->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_chinese->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_english->setSelected(true);
+        m_english->onClicked = [this] { selectLanguage(m_english); };
+        m_chinese->onClicked = [this] { selectLanguage(m_chinese); };
         m_pages->addPage(std::move(language));
 
         auto keyboard = page("Select the keyboard layout you use most often. You can add more layouts later in Settings.");
-        auto* us = keyboard->addChild<RadioButton>("English (US)");
-        auto* pinyin = keyboard->addChild<RadioButton>("中文拼音");
-        m_keyboardGroup.add(us);
-        m_keyboardGroup.add(pinyin);
-        us->setChecked(true);
+        m_usKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "English (US)",
+                                                       "QWERTY keyboard layout");
+        m_pinyinKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "中文拼音", "Chinese Pinyin input");
+        m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_usKeyboard->setSelected(true);
+        m_usKeyboard->onClicked = [this] { selectKeyboard(m_usKeyboard); };
+        m_pinyinKeyboard->onClicked = [this] { selectKeyboard(m_pinyinKeyboard); };
         m_pages->addPage(std::move(keyboard));
 
         std::string timeText = "Use network time to keep the system clock accurate.";
@@ -413,9 +502,15 @@ private:
         m_pages->addPage(page("Network access can be configured from the status bar after setup. Your existing connections will remain available."));
 
         auto appearance = page("Choose how Lingmo Aurora should look. You can change this later in Settings.");
-        auto* dark = appearance->addChild<CheckBox>("Use dark appearance");
-        dark->setChecked(m_appearance.darkMode());
-        dark->onToggled = [this](bool checked) { m_appearance.setDarkMode(checked); };
+        m_lightAppearance = appearance->addChild<ChoiceCard>("preferences-desktop-appearance", "Light appearance",
+                                                              "Bright surfaces with clear contrast");
+        m_darkAppearance = appearance->addChild<ChoiceCard>("zorin-appearance", "Dark appearance",
+                                                             "A darker palette for dim environments");
+        m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 68});
+        m_lightAppearance->onClicked = [this] { chooseAppearance(false); };
+        m_darkAppearance->onClicked = [this] { chooseAppearance(true); };
+        updateAppearanceChoices();
         m_pages->addPage(std::move(appearance));
 
         m_pages->addPage(page("Your basic preferences are ready. Select Finish to enter the Lingmo Aurora desktop."));
@@ -463,6 +558,32 @@ private:
         m_visual->setWallpaper(std::move(wallpaper));
     }
 
+    void selectLanguage(ChoiceCard* selected)
+    {
+        m_english->setSelected(selected == m_english);
+        m_chinese->setSelected(selected == m_chinese);
+    }
+
+    void selectKeyboard(ChoiceCard* selected)
+    {
+        m_usKeyboard->setSelected(selected == m_usKeyboard);
+        m_pinyinKeyboard->setSelected(selected == m_pinyinKeyboard);
+    }
+
+    void chooseAppearance(bool dark)
+    {
+        m_appearance.setDarkMode(dark);
+        updateAppearanceChoices();
+    }
+
+    void updateAppearanceChoices()
+    {
+        if (m_lightAppearance)
+            m_lightAppearance->setSelected(!m_appearance.darkMode());
+        if (m_darkAppearance)
+            m_darkAppearance->setSelected(m_appearance.darkMode());
+    }
+
     Lingmo::appearance::Appearance& m_appearance;
     Lingmo::timedate::TimeDate m_timeDate;
     base::Subscription m_appearanceChanged;
@@ -477,8 +598,12 @@ private:
     RowLayout* m_actions = nullptr;
     DialogButton* m_back = nullptr;
     DialogButton* m_next = nullptr;
-    ButtonGroup m_languageGroup;
-    ButtonGroup m_keyboardGroup;
+    ChoiceCard* m_english = nullptr;
+    ChoiceCard* m_chinese = nullptr;
+    ChoiceCard* m_usKeyboard = nullptr;
+    ChoiceCard* m_pinyinKeyboard = nullptr;
+    ChoiceCard* m_lightAppearance = nullptr;
+    ChoiceCard* m_darkAppearance = nullptr;
     size_t m_page = 0;
 };
 
