@@ -9,9 +9,6 @@
 
 namespace Lingmo::ui {
 class Application;
-class Button;
-class ImageView;
-class Label;
 class View;
 }
 
@@ -29,8 +26,4 @@ private:
 
     Lingmo::ui::Window m_window;
     std::unique_ptr<Lingmo::ui::View> m_view;
-    Lingmo::ui::Label* m_title = nullptr;
-    Lingmo::ui::Label* m_subtitle = nullptr;
-    Lingmo::ui::ImageView* m_logo = nullptr;
-    Lingmo::ui::Button* m_start = nullptr;
 };
