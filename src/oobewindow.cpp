@@ -14,6 +14,8 @@
 #include "ui/color_id.h"
 #include "ui/image_view.h"
 #include "ui/label.h"
+#include "ui/painter.h"
+#include "ui/popup_glass.h"
 #include "ui/theme.h"
 #include "ui/view.h"
 
@@ -23,31 +25,38 @@ using namespace Lingmo::ui;
 
 namespace {
 
-class WelcomeView final : public View
+class WelcomeCard final : public View
 {
 public:
-    WelcomeView(Label*& title, Label*& subtitle, ImageView*& logo, Button*& start,
+    WelcomeCard(Label*& title, Label*& subtitle, ImageView*& logo, Button*& start,
                 std::function<void()> onStart)
     {
-        auto* column = addChild<ColumnLayout>();
-        column->setLayoutHints({.fillWidth = true, .fillHeight = true,
-                                .horizontalAlignment = Alignment::Center});
-        column->setSpacing(Theme::current().largeSpacing);
+        setClipsChildren(true);
+        setChildClipRadius(Theme::current().windowRadius);
 
-        logo = column->addChild<ImageView>(std::string(OOBE_DATA_DIR) + "/images/logo.svg");
+        auto* row = addChild<RowLayout>();
+        row->setLayoutHints({.fillWidth = true, .fillHeight = true});
+        row->setPadding({56, 48, 56, 48});
+        row->setSpacing(48);
+
+        logo = row->addChild<ImageView>(std::string(OOBE_DATA_DIR) + "/images/logo.svg");
         logo->setFillMode(ImageView::FillMode::PreserveAspectFit);
-        logo->setLayoutHints({.preferredWidth = 104, .preferredHeight = 104,
+        logo->setCornerRadius(28, themeCorners());
+        logo->setLayoutHints({.preferredWidth = 236, .preferredHeight = 236,
                               .verticalAlignment = Alignment::Center});
+
+        auto* column = row->addChild<ColumnLayout>();
+        column->setLayoutHints({.fillWidth = true, .fillHeight = true,
+                                .horizontalAlignment = Alignment::Start});
+        column->setSpacing(Theme::current().largeSpacing);
 
         title = column->addChild<Label>("Welcome to Lingmo Aurora");
         title->setFontSize(28);
         title->setWeight(600);
-        title->setTextAlignment(Label::TextAlignment::Center);
 
         subtitle = column->addChild<Label>("A calm, capable desktop for your everyday work.");
         subtitle->setFontSize(14);
         subtitle->setColor(ColorId::DisabledText);
-        subtitle->setTextAlignment(Label::TextAlignment::Center);
 
         auto* spacer = column->addChild<View>();
         spacer->setLayoutHints({.fillHeight = true, .stretch = 1});
@@ -60,15 +69,60 @@ public:
     }
 
 protected:
+    void paint(Painter& painter) override
+    {
+        const Theme& theme = Theme::current();
+        const Color shadow = Color::rgb(0x000000).withAlpha(theme.darkMode ? 0.42 : 0.25);
+        const Color surface = theme.secondBackground.withAlpha(theme.darkMode ? 0.88 : 0.84);
+        painter.drawShadow(localRect(), theme.windowRadius, 24, shadow, {0, 12});
+        painter.fillRoundedRect(localRect(), theme.windowRadius, surface, themeCorners());
+        painter.drawSmoothRectangle(localRect().adjusted(0.5, 0.5, -0.5, -0.5),
+                                    theme.windowRadius, Color::rgb(0x000000).withAlpha(0), 1,
+                                    theme.text.withAlpha(theme.darkMode ? 0.08 : 0.12));
+    }
+};
+
+class OobeView final : public View
+{
+public:
+    OobeView(Label*& title, Label*& subtitle, ImageView*& logo, Button*& start,
+             std::function<void()> onStart)
+        : m_card(addChild<WelcomeCard>(title, subtitle, logo, start, std::move(onStart)))
+    {
+        setClipsChildren(false);
+    }
+
+protected:
     void layout() override
     {
-        auto* column = dynamic_cast<ColumnLayout*>(children().front().get());
-        if (!column)
-            return;
-        const double inset = std::min(geometry().width * 0.12, 96.0);
-        column->setGeometry({inset, 48, std::max(0.0, geometry().width - 2 * inset),
-                             std::max(0.0, geometry().height - 96)});
+        const RectF bounds = localRect();
+        const double margin = 48;
+        const double cardWidth = std::min(960.0, std::max(0.0, bounds.width - 2 * margin));
+        const double cardHeight = std::min(600.0, std::max(0.0, bounds.height - 2 * margin));
+        m_card->setGeometry({(bounds.width - cardWidth) / 2, (bounds.height - cardHeight) / 2,
+                             cardWidth, cardHeight});
+
+        if (auto* surface = window()) {
+            const Theme& theme = Theme::current();
+            surface->setBackgroundBlur(bounds, 0);
+            if (surface->backgroundGlassAvailable()) {
+                auto glass = popupGlass(theme.darkMode);
+                glass.blurSigma = 10;
+                glass.displacement = 0;
+                glass.tintAlpha = theme.darkMode ? 0.16 : 0.10;
+                surface->setBackgroundGlass(glass);
+            }
+        }
     }
+
+    void paint(Painter& painter) override
+    {
+        const Theme& theme = Theme::current();
+        painter.fillRect(localRect(), theme.background.withAlpha(theme.darkMode ? 0.28 : 0.14));
+    }
+
+private:
+    WelcomeCard* m_card;
 };
 
 } // namespace
@@ -76,12 +130,13 @@ protected:
 OobeWindow::OobeWindow()
 {
     m_window.setTitle("Lingmo Aurora Setup");
-    m_window.setMinimumSize({720, 520});
-    m_window.resize({900, 620});
-    m_window.setBackgroundColor(ColorRecipe(ColorId::Background));
-    m_window.setBackgroundBlur({0, 0, 900, 620}, Theme::current().windowRadius);
-    m_view = std::make_unique<WelcomeView>(m_title, m_subtitle, m_logo, m_start,
-                                           [this] { complete(); });
+    m_window.setFullScreen(true);
+    m_window.setUserResizable(false);
+    m_window.setSkipTaskbar(true);
+    m_window.setAlwaysOnTop(true);
+    m_window.setBackgroundColor(Color::rgb(0x000000).withAlpha(0));
+    m_view = std::make_unique<OobeView>(m_title, m_subtitle, m_logo, m_start,
+                                        [this] { complete(); });
     m_window.setContentView(std::move(m_view));
 }
 

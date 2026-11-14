@@ -1,3 +1,9 @@
+lingmo-oobe (1.0.1+lingmo1) unstable; urgency=medium
+
+  * Use a full-screen backdrop with a centered glass setup card.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 04:30:00 +0800
+
 lingmo-oobe (1.0.0+lingmo1) unstable; urgency=medium
 
   * Add the first-run Lingmo Aurora welcome application.
