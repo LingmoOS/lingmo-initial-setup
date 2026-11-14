@@ -198,9 +198,11 @@ protected:
 
     void paint(Painter& painter) override
     {
+        const Theme& theme = Theme::current();
+        painter.drawShadow(localRect(), localRect().width / 2, 16,
+                           Color::rgb(0x000000).withAlpha(theme.darkMode ? 0.30 : 0.18), {0, 8});
         if (!m_icon->isVisible())
             return;
-        const Theme& theme = Theme::current();
         const RectF circle = localRect().adjusted(24, 24, -24, -24);
         painter.fillEllipse(circle, theme.highlight.withAlpha(theme.darkMode ? 0.20 : 0.12));
     }
@@ -220,6 +222,35 @@ private:
     ThemeIcon* m_icon;
     size_t m_page = 0;
     std::unique_ptr<Animation> m_transition;
+};
+
+class StepIndicator final : public View
+{
+public:
+    void setCurrent(size_t page)
+    {
+        if (page == m_current)
+            return;
+        m_current = page;
+        requestPaint();
+    }
+
+protected:
+    void paint(Painter& painter) override
+    {
+        const Theme& theme = Theme::current();
+        const double gap = 6;
+        const double height = 5;
+        const double width = (geometry().width - gap * 3) / 4;
+        for (size_t i = 0; i < 4; ++i) {
+            const RectF segment {(width + gap) * i, 0, width, height};
+            const Color color = i <= m_current ? theme.highlight : theme.alternateBackground;
+            painter.fillRoundedRect(segment, height / 2, color);
+        }
+    }
+
+private:
+    size_t m_current = 0;
 };
 
 class SetupCard final : public View
@@ -255,6 +286,9 @@ public:
         m_subtitle = m_panel->addChild<Label>();
         m_subtitle->setFontSize(14);
         m_subtitle->setColor(ColorId::DisabledText);
+
+        m_steps = m_panel->addChild<StepIndicator>();
+        m_steps->setLayoutHints({.fillWidth = true, .preferredHeight = 5});
 
         m_pages = m_panel->addChild<PageStack>();
         m_pages->setLayoutHints({.fillWidth = true, .fillHeight = true, .stretch = 1});
@@ -359,6 +393,7 @@ private:
         };
         m_title->setText(titles[page]);
         m_subtitle->setText(subtitles[page]);
+        m_steps->setCurrent(page);
         m_pages->setCurrent(page);
         m_visual->setPage(page);
         m_back->setVisible(page > 0);
@@ -384,6 +419,7 @@ private:
     ColumnLayout* m_panel = nullptr;
     Label* m_title = nullptr;
     Label* m_subtitle = nullptr;
+    StepIndicator* m_steps = nullptr;
     PageStack* m_pages = nullptr;
     RowLayout* m_actions = nullptr;
     DialogButton* m_back = nullptr;
