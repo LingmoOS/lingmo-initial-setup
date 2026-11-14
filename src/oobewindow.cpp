@@ -505,9 +505,9 @@ private:
                                                        "QWERTY keyboard layout");
         m_pinyinKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "中文拼音", "Chinese Pinyin input");
         m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
-                                      .verticalAlignment = Alignment::Start});
+                                      .verticalAlignment = Alignment::Start, .margins = {0, 0, 12, 0}});
         m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
-                                          .verticalAlignment = Alignment::Start});
+                                          .verticalAlignment = Alignment::Start, .margins = {0, 0, 12, 0}});
         m_usKeyboard->setSelected(true);
         m_usKeyboard->onClicked = [this] { selectKeyboard(m_usKeyboard); };
         m_pinyinKeyboard->onClicked = [this] { selectKeyboard(m_pinyinKeyboard); };
@@ -534,9 +534,9 @@ private:
         m_darkAppearance = appearance->addChild<ChoiceCard>("zorin-appearance", "Dark appearance",
                                                              "A darker palette for dim environments");
         m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
-                                           .verticalAlignment = Alignment::Start});
+                                           .verticalAlignment = Alignment::Start, .margins = {0, 0, 12, 0}});
         m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
-                                          .verticalAlignment = Alignment::Start});
+                                          .verticalAlignment = Alignment::Start, .margins = {0, 0, 12, 0}});
         m_lightAppearance->onClicked = [this] { chooseAppearance(false); };
         m_darkAppearance->onClicked = [this] { chooseAppearance(true); };
         updateAppearanceChoices();
