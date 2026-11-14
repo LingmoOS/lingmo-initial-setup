@@ -1,4 +1,4 @@
-# Lingmo Aurora OOBE
+# Lingmo Aurora Initial Setup
 
 The first-run setup application for an installed Lingmo Aurora system.
 
