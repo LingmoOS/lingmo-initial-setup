@@ -13,6 +13,7 @@
 
 #include "base/paths.h"
 #include "lingmo/appearance/appearance.h"
+#include "lingmo/timedate/time_date.h"
 #include "ui/application.h"
 #include "ui/animation.h"
 #include "ui/cell_layout.h"
@@ -160,7 +161,8 @@ public:
         if (page == m_page)
             return;
         static constexpr const char* icons[] = {
-            "", "applications-education-language", "zorin-appearance", "emblem-checked"};
+            "", "applications-education-language", "input-keyboard", "preferences-system-time",
+            "network-wireless", "zorin-appearance", "emblem-checked"};
         View* oldView = m_page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
         View* newView = page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
         m_page = page;
@@ -170,7 +172,7 @@ public:
         oldView->setVisible(true);
         oldView->setOpacity(1);
         if (page != 0)
-            m_icon->setIconName(icons[std::min(page, size_t(3))]);
+            m_icon->setIconName(icons[std::min(page, size_t(6))]);
         newView->setVisible(true);
         newView->setOpacity(0);
         if (!window()) {
@@ -232,6 +234,12 @@ private:
 class StepIndicator final : public View
 {
 public:
+    void setCount(size_t count)
+    {
+        m_count = std::max<size_t>(1, count);
+        requestPaint();
+    }
+
     void setCurrent(size_t page)
     {
         if (page == m_current)
@@ -246,8 +254,8 @@ protected:
         const Theme& theme = Theme::current();
         const double gap = 6;
         const double height = 5;
-        const double width = (geometry().width - gap * 3) / 4;
-        for (size_t i = 0; i < 4; ++i) {
+        const double width = (geometry().width - gap * (m_count - 1)) / m_count;
+        for (size_t i = 0; i < m_count; ++i) {
             const RectF segment {(width + gap) * i, 0, width, height};
             const Color color = i <= m_current ? theme.highlight : theme.alternateBackground;
             painter.fillRoundedRect(segment, height / 2, color);
@@ -256,6 +264,7 @@ protected:
 
 private:
     size_t m_current = 0;
+    size_t m_count = 4;
 };
 
 class SetupCard final : public View
@@ -356,7 +365,7 @@ protected:
     }
 
 private:
-    static constexpr size_t kPageCount = 4;
+    static constexpr size_t kPageCount = 7;
 
     static std::unique_ptr<ColumnLayout> page(std::string text)
     {
@@ -380,6 +389,29 @@ private:
         english->setChecked(true);
         m_pages->addPage(std::move(language));
 
+        auto keyboard = page("Select the keyboard layout you use most often. You can add more layouts later in Settings.");
+        auto* us = keyboard->addChild<RadioButton>("English (US)");
+        auto* pinyin = keyboard->addChild<RadioButton>("中文拼音");
+        m_keyboardGroup.add(us);
+        m_keyboardGroup.add(pinyin);
+        us->setChecked(true);
+        m_pages->addPage(std::move(keyboard));
+
+        std::string timeText = "Use network time to keep the system clock accurate.";
+        if (!m_timeDate.timezone().empty())
+            timeText += "\n\nCurrent time zone: " + m_timeDate.timezone();
+        auto time = page(std::move(timeText));
+        auto* ntp = time->addChild<CheckBox>("Set time automatically");
+        ntp->setChecked(m_timeDate.ntp());
+        ntp->setEnabled(m_timeDate.canNtp());
+        ntp->onToggled = [this](bool checked) {
+            if (m_timeDate.canNtp())
+                m_timeDate.setNtp(checked);
+        };
+        m_pages->addPage(std::move(time));
+
+        m_pages->addPage(page("Network access can be configured from the status bar after setup. Your existing connections will remain available."));
+
         auto appearance = page("Choose how Lingmo Aurora should look. You can change this later in Settings.");
         auto* dark = appearance->addChild<CheckBox>("Use dark appearance");
         dark->setChecked(m_appearance.darkMode());
@@ -395,15 +427,22 @@ private:
         static constexpr const char* titles[] = {
             "Welcome to Lingmo Aurora",
             "Language & region",
+            "Keyboard layout",
+            "Time & date",
+            "Network access",
             "Personalize your desktop",
             "You're ready to go",
         };
         static constexpr const char* subtitles[] = {
             "Let's get your new desktop ready.",
             "These choices apply to your first session.",
+            "Choose your primary input method.",
+            "Keep your clock in sync.",
+            "Connect after you enter the desktop.",
             "Choose a comfortable appearance.",
             "Finish setup to start using Aurora.",
         };
+        m_steps->setCount(kPageCount);
         m_title->setText(titles[page]);
         m_subtitle->setText(subtitles[page]);
         m_steps->setCurrent(page);
@@ -425,6 +464,7 @@ private:
     }
 
     Lingmo::appearance::Appearance& m_appearance;
+    Lingmo::timedate::TimeDate m_timeDate;
     base::Subscription m_appearanceChanged;
     std::function<void()> m_onComplete;
     RowLayout* m_row = nullptr;
@@ -438,6 +478,7 @@ private:
     DialogButton* m_back = nullptr;
     DialogButton* m_next = nullptr;
     ButtonGroup m_languageGroup;
+    ButtonGroup m_keyboardGroup;
     size_t m_page = 0;
 };
 
