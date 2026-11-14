@@ -5,12 +5,14 @@
 #include "oobewindow.h"
 
 #include "base/paths.h"
+#include "base/i18n.h"
 #include "ui/application.h"
 
 int main(int argc, char** argv)
 {
     Lingmo::ui::Application application(argc, argv);
-    application.setApplicationId("lingmo-oobe");
+    Lingmo::I18n::setDomain("lingmo-initial-setup");
+    application.setApplicationId("lingmo-initial-setup");
 
     if (oobe::isComplete(Lingmo::base::paths::home()))
         return 0;

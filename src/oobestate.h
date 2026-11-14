@@ -36,7 +36,7 @@ inline bool markComplete(const std::filesystem::path& home)
 inline bool clearAccountState(const std::filesystem::path& root = "/etc")
 {
     std::error_code error;
-    return std::filesystem::remove(root / "lingmo-oobe-account.conf", error) || !error;
+    return std::filesystem::remove(root / "lingmo-initial-setup-account.conf", error) || !error;
 }
 
 } // namespace oobe

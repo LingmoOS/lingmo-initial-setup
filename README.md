@@ -2,7 +2,7 @@
 
 The first-run setup application for an installed Lingmo Aurora system.
 
-The installer configures `lingmo-dm` to start the `lingmo-oobe` Wayland
+The installer configures `lingmo-dm` to start the `lingmo-initial-setup` Wayland
 session for the installed account. OOBE writes
 `~/.config/lingmo/oobe.conf` after the user chooses **Get Started**. On later
 automatic logins, `lingmo-dm` sees that marker and starts `lingmo-wayland`
@@ -16,5 +16,5 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The build uses the Lingmo SDK and installs `lingmo-oobe.desktop` into the
+The build uses the Lingmo SDK and installs `lingmo-initial-setup.desktop` into the
 Wayland session directory.

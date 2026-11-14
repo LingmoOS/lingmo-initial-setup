@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "base/paths.h"
+#include "base/i18n.h"
 #include "lingmo/appearance/appearance.h"
 #include "lingmo/timedate/time_date.h"
 #include "ui/application.h"
@@ -31,6 +32,7 @@
 #include "oobestate.h"
 
 using namespace Lingmo::ui;
+using Lingmo::I18n::tr;
 
 namespace {
 
@@ -407,7 +409,7 @@ public:
         m_actions->setLayoutHints({.fillWidth = true});
         m_actions->setSpacing(Theme::current().mediumSpacing);
 
-        m_back = m_actions->addChild<DialogButton>("Back");
+        m_back = m_actions->addChild<DialogButton>(tr("Back"));
         m_back->setLayoutHints({.preferredWidth = 112, .preferredHeight = 44});
         m_back->onClicked = [this] {
             if (m_page > 0)
@@ -417,7 +419,7 @@ public:
         auto* spacer = m_actions->addChild<View>();
         spacer->setLayoutHints({.fillWidth = true, .stretch = 1});
 
-        m_next = m_actions->addChild<DialogButton>("Continue", true);
+        m_next = m_actions->addChild<DialogButton>(tr("Continue"), true);
         m_next->setName("oobe-next");
         m_next->setLayoutHints({.preferredWidth = 144, .preferredHeight = 44});
         m_next->onClicked = [this] {
@@ -476,34 +478,34 @@ private:
 
     void addPages()
     {
-        m_pages->addPage(page("A calm, capable desktop for your everyday work.\n\nThis setup takes a few moments and can be changed later in Settings."));
+        m_pages->addPage(page(tr("A calm, capable desktop for your everyday work.\n\nThis setup takes a few moments and can be changed later in Settings.")));
 
-        auto agreement = page("Please review the Lingmo Aurora service agreement before continuing.");
-        auto* agreementTitle = agreement->addChild<Label>("Lingmo Aurora Service Agreement");
+        auto agreement = page(tr("Please review the Lingmo Aurora service agreement before continuing."));
+        auto* agreementTitle = agreement->addChild<Label>(tr("Lingmo Aurora Service Agreement"));
         agreementTitle->setWeight(600);
-        auto* effective = agreement->addChild<Label>("Effective date: 2026-11-01");
+        auto* effective = agreement->addChild<Label>(tr("Effective date: 2026-11-01"));
         effective->setColor(ColorId::DisabledText);
-        auto* text = agreement->addChild<TextArea>(
+        auto* text = agreement->addChild<TextArea>(tr(
                 "Lingmo Aurora Service Agreement\n\n"
                 "Before using Lingmo Aurora or any service provided with it, please read this agreement carefully. "
                 "By installing or using the system, you agree to the terms and conditions described here.\n\n"
                 "The system may include third-party services and software. Their respective terms and notices remain "
-                "available in Settings. You can review or change your preferences after setup.");
+                "available in Settings. You can review or change your preferences after setup."));
         text->setReadOnly(true);
         text->setWrapMode(TextArea::WrapMode::WordWrap);
         text->setFrameVisible(true);
         text->setPadding({12, 10, 12, 10});
         text->setLayoutHints({.fillWidth = true, .preferredHeight = 180, .maximumHeight = 220});
-        m_agreementAccepted = agreement->addChild<CheckBox>("I agree to the Lingmo Aurora service agreement");
+        m_agreementAccepted = agreement->addChild<CheckBox>(tr("I agree to the Lingmo Aurora service agreement"));
         m_agreementAccepted->onToggled = [this](bool accepted) {
             m_next->setEnabled(accepted);
         };
         m_pages->addPage(std::move(agreement));
 
-        auto keyboard = page("Select the keyboard layout you use most often. You can add more layouts later in Settings.");
-        m_usKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "English (US)",
-                                                       "QWERTY keyboard layout");
-        m_pinyinKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "中文拼音", "Chinese Pinyin input");
+        auto keyboard = page(tr("Select the keyboard layout you use most often. You can add more layouts later in Settings."));
+        m_usKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", tr("English (US)"),
+                                                       tr("QWERTY keyboard layout"));
+        m_pinyinKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", tr("中文拼音"), tr("Chinese Pinyin input"));
         m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
                                       .verticalAlignment = Alignment::Start, .margins = {0, 0, 12, 0}});
         m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
@@ -513,11 +515,11 @@ private:
         m_pinyinKeyboard->onClicked = [this] { selectKeyboard(m_pinyinKeyboard); };
         m_pages->addPage(std::move(keyboard));
 
-        std::string timeText = "Use network time to keep the system clock accurate.";
+        std::string timeText = tr("Use network time to keep the system clock accurate.");
         if (!m_timeDate.timezone().empty())
-            timeText += "\n\nCurrent time zone: " + m_timeDate.timezone();
+            timeText += std::string(tr("\n\nCurrent time zone: ")) + m_timeDate.timezone();
         auto time = page(std::move(timeText));
-        auto* ntp = time->addChild<CheckBox>("Set time automatically");
+        auto* ntp = time->addChild<CheckBox>(tr("Set time automatically"));
         ntp->setChecked(m_timeDate.ntp());
         ntp->setEnabled(m_timeDate.canNtp());
         ntp->onToggled = [this](bool checked) {
@@ -526,13 +528,13 @@ private:
         };
         m_pages->addPage(std::move(time));
 
-        m_pages->addPage(page("Network access can be configured from the status bar after setup. Your existing connections will remain available."));
+        m_pages->addPage(page(tr("Network access can be configured from the status bar after setup. Your existing connections will remain available.")));
 
-        auto appearance = page("Choose how Lingmo Aurora should look. You can change this later in Settings.");
-        m_lightAppearance = appearance->addChild<ChoiceCard>("preferences-desktop-appearance", "Light appearance",
-                                                              "Bright surfaces with clear contrast");
-        m_darkAppearance = appearance->addChild<ChoiceCard>("zorin-appearance", "Dark appearance",
-                                                             "A darker palette for dim environments");
+        auto appearance = page(tr("Choose how Lingmo Aurora should look. You can change this later in Settings."));
+        m_lightAppearance = appearance->addChild<ChoiceCard>("preferences-desktop-appearance", tr("Light appearance"),
+                                                              tr("Bright surfaces with clear contrast"));
+        m_darkAppearance = appearance->addChild<ChoiceCard>("zorin-appearance", tr("Dark appearance"),
+                                                             tr("A darker palette for dim environments"));
         m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
                                            .verticalAlignment = Alignment::Start, .margins = {0, 0, 12, 0}});
         m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
@@ -542,29 +544,29 @@ private:
         updateAppearanceChoices();
         m_pages->addPage(std::move(appearance));
 
-        m_pages->addPage(page("Your basic preferences are ready. Select Finish to enter the Lingmo Aurora desktop."));
+        m_pages->addPage(page(tr("Your basic preferences are ready. Select Finish to enter the Lingmo Aurora desktop.")));
     }
 
     void showPage(size_t page)
     {
         m_page = page;
-        static constexpr const char* titles[] = {
-            "Welcome to Lingmo Aurora",
-            "Service agreement",
-            "Keyboard layout",
-            "Time & date",
-            "Network access",
-            "Personalize your desktop",
-            "You're ready to go",
+        static const char* const titles[] = {
+            tr("Welcome to Lingmo Aurora"),
+            tr("Service agreement"),
+            tr("Keyboard layout"),
+            tr("Time & date"),
+            tr("Network access"),
+            tr("Personalize your desktop"),
+            tr("You're ready to go"),
         };
-        static constexpr const char* subtitles[] = {
-            "Let's get your new desktop ready.",
-            "Review the terms before continuing.",
-            "Choose your primary input method.",
-            "Keep your clock in sync.",
-            "Connect after you enter the desktop.",
-            "Choose a comfortable appearance.",
-            "Finish setup to start using Aurora.",
+        static const char* const subtitles[] = {
+            tr("Let's get your new desktop ready."),
+            tr("Review the terms before continuing."),
+            tr("Choose your primary input method."),
+            tr("Keep your clock in sync."),
+            tr("Connect after you enter the desktop."),
+            tr("Choose a comfortable appearance."),
+            tr("Finish setup to start using Aurora."),
         };
         m_steps->setCount(kPageCount);
         m_title->setText(titles[page]);
@@ -573,7 +575,7 @@ private:
         m_pages->setCurrent(page);
         m_visual->setPage(page);
         m_back->setVisible(page > 0);
-        m_next->setText(page + 1 == kPageCount ? "Finish" : "Continue");
+        m_next->setText(page + 1 == kPageCount ? tr("Finish") : tr("Continue"));
         m_next->setEnabled(page != 1 || (m_agreementAccepted && m_agreementAccepted->isChecked()));
         requestLayout();
         requestPaint();
@@ -696,7 +698,7 @@ private:
 
 OobeWindow::OobeWindow()
 {
-    m_window.setTitle("Lingmo Aurora Setup");
+    m_window.setTitle(tr("Lingmo Aurora Initial Setup"));
     m_window.setFullScreen(true);
     m_window.setUserResizable(false);
     m_window.setSkipTaskbar(true);
