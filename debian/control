@@ -1,0 +1,12 @@
+Source: lingmo-oobe
+Section: x11
+Priority: optional
+Maintainer: Lingmo OS Team <team@lingmo.org>
+Build-Depends: cmake, debhelper-compat (= 13), lingmo-sdk-dev
+Standards-Version: 4.7.2
+
+Package: lingmo-oobe
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Lingmo Aurora first-run setup
+ First-run setup application for Lingmo Aurora.

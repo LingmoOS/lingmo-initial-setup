@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Lingmo Aurora Setup
+Comment=First-run setup for Lingmo Aurora
+Exec=/usr/bin/lingmo-oobe
+TryExec=/usr/bin/lingmo-oobe
+Type=Application
+DesktopNames=Lingmo;

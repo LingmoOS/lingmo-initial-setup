@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Lingmo Aurora Setup
+Comment=First-run setup for Lingmo Aurora
+Exec=lingmo-oobe
+Icon=preferences-desktop
+Terminal=false
+Type=Application
+Categories=Settings;System;
+NoDisplay=true
