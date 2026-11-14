@@ -103,9 +103,11 @@ protected:
     void layout() override
     {
         const RectF bounds = localRect();
+        const double inset = std::min(12.0, bounds.width / 12.0);
         for (View* page : m_pages) {
-            const double height = std::min(bounds.height, page->heightForWidth(bounds.width));
-            page->setGeometry({0, std::max(0.0, (bounds.height - height) / 2), bounds.width,
+            const double width = std::max(0.0, bounds.width - inset * 2);
+            const double height = std::min(bounds.height, page->heightForWidth(width));
+            page->setGeometry({inset, std::max(0.0, (bounds.height - height) / 2), width,
                                std::max(0.0, height)});
         }
     }
