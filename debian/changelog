@@ -1,3 +1,9 @@
+lingmo-oobe (1.1.8+lingmo1) unstable; urgency=medium
+
+  * Improve responsive card spacing and use full-colour page icons.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 08:00:00 +0800
+
 lingmo-oobe (1.1.7+lingmo1) unstable; urgency=medium
 
   * Refine the setup card with a step indicator and visual depth.

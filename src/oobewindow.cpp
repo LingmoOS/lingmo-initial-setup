@@ -142,11 +142,10 @@ class PageVisual final : public View
 public:
     explicit PageVisual(std::string wallpaper)
         : m_wallpaper(addChild<ImageView>(std::move(wallpaper)))
-        , m_icon(addChild<ThemeIcon>("preferences-desktop-locale", 92))
+        , m_icon(addChild<ThemeIcon>("applications-education-language", 92))
     {
         m_wallpaper->setFillMode(ImageView::FillMode::PreserveAspectCrop);
         m_wallpaper->setCornerRadius(118, themeCorners());
-        m_icon->setColor(ColorId::Text);
         m_icon->setVisible(false);
     }
 
@@ -161,7 +160,7 @@ public:
         if (page == m_page)
             return;
         static constexpr const char* icons[] = {
-            "", "preferences-desktop-locale", "preferences-desktop-appearance", "emblem-checked"};
+            "", "applications-education-language", "zorin-appearance", "emblem-checked"};
         View* oldView = m_page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
         View* newView = page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
         m_page = page;
@@ -199,12 +198,18 @@ protected:
     void paint(Painter& painter) override
     {
         const Theme& theme = Theme::current();
-        painter.drawShadow(localRect(), localRect().width / 2, 16,
-                           Color::rgb(0x000000).withAlpha(theme.darkMode ? 0.30 : 0.18), {0, 8});
         if (!m_icon->isVisible())
+        {
+            painter.drawShadow(localRect(), localRect().width / 2, 16,
+                               Color::rgb(0x000000).withAlpha(theme.darkMode ? 0.30 : 0.18), {0, 8});
             return;
-        const RectF circle = localRect().adjusted(24, 24, -24, -24);
-        painter.fillEllipse(circle, theme.highlight.withAlpha(theme.darkMode ? 0.20 : 0.12));
+        }
+        const RectF circle = localRect().adjusted(18, 18, -18, -18);
+        painter.drawShadow(circle, circle.width / 2, 14,
+                           Color::rgb(0x000000).withAlpha(theme.darkMode ? 0.28 : 0.16), {0, 6});
+        painter.fillEllipse(circle, theme.secondBackground.withAlpha(theme.darkMode ? 0.84 : 0.88));
+        painter.fillEllipse(circle.adjusted(3, 3, -3, -3),
+                           theme.highlight.withAlpha(theme.darkMode ? 0.16 : 0.10));
     }
 
 private:
@@ -265,26 +270,26 @@ public:
 
         m_row = addChild<RowLayout>();
         m_row->setLayoutHints({.fillWidth = true, .fillHeight = true});
-        m_row->setPadding({56, 48, 56, 48});
-        m_row->setSpacing(48);
+        m_row->setPadding({64, 52, 64, 52});
+        m_row->setSpacing(56);
 
         std::string wallpaper = m_appearance.wallpaper();
         std::error_code error;
         if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper, error))
             wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
         m_visual = m_row->addChild<PageVisual>(std::move(wallpaper));
-        m_visual->setLayoutHints({.preferredWidth = 236, .preferredHeight = 236,
+        m_visual->setLayoutHints({.preferredWidth = 264, .preferredHeight = 264,
                                   .verticalAlignment = Alignment::Center});
 
         m_panel = m_row->addChild<ColumnLayout>();
         m_panel->setLayoutHints({.fillWidth = true, .fillHeight = true});
-        m_panel->setSpacing(Theme::current().largeSpacing);
+        m_panel->setSpacing(16);
 
         m_title = m_panel->addChild<Label>();
-        m_title->setFontSize(28);
+        m_title->setFontSize(30);
         m_title->setWeight(600);
         m_subtitle = m_panel->addChild<Label>();
-        m_subtitle->setFontSize(14);
+        m_subtitle->setFontSize(15);
         m_subtitle->setColor(ColorId::DisabledText);
 
         m_steps = m_panel->addChild<StepIndicator>();
@@ -327,6 +332,14 @@ public:
 protected:
     void layout() override
     {
+        const double width = geometry().width;
+        const double inset = std::clamp(width * 0.065, 32.0, 64.0);
+        const double spacing = std::clamp(width * 0.055, 32.0, 56.0);
+        const double visualSize = std::clamp(width * 0.30, 176.0, 264.0);
+        m_row->setPadding({inset, 52, inset, 52});
+        m_row->setSpacing(spacing);
+        m_visual->setLayoutHints({.preferredWidth = visualSize, .preferredHeight = visualSize,
+                                  .verticalAlignment = Alignment::Center});
         m_row->setGeometry(localRect());
     }
 
@@ -452,9 +465,9 @@ protected:
     void layout() override
     {
         const RectF bounds = localRect();
-        const double margin = 48;
-        const double cardWidth = std::min(960.0, std::max(0.0, bounds.width - 2 * margin));
-        const double cardHeight = std::min(600.0, std::max(0.0, bounds.height - 2 * margin));
+        const double margin = 32;
+        const double cardWidth = std::min(1040.0, std::max(0.0, bounds.width - 2 * margin));
+        const double cardHeight = std::min(640.0, std::max(0.0, bounds.height - 2 * margin));
         m_wallpaper->setGeometry(bounds);
         m_tint->setGeometry(bounds);
         m_card->setGeometry({(bounds.width - cardWidth) / 2, (bounds.height - cardHeight) / 2,
