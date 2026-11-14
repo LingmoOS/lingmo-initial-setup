@@ -251,7 +251,7 @@ public:
         , m_description(m_text->addChild<Label>(std::move(description)))
         , m_check(m_row->addChild<Icon>("check", 18))
     {
-        m_row->setPadding({14, 4, 14, 4});
+        m_row->setPadding({14, 4, 30, 4});
         m_row->setSpacing(10);
         m_row->setLayoutHints({.fillWidth = true, .fillHeight = true});
         m_text->setLayoutHints({.fillWidth = true, .fillHeight = true});
@@ -292,7 +292,8 @@ protected:
         } else if (isHovered()) {
             fill = theme.alternateBackground.withAlpha(theme.darkMode ? 0.82 : 0.92);
         }
-        painter.drawRoundedRect(localRect(), {theme.mediumRadius, 0, themeCorners()}, fill,
+        const RectF bounds = localRect().adjusted(0, 0, -12, 0);
+        painter.drawRoundedRect(bounds, {theme.mediumRadius, 0, themeCorners()}, fill,
                                 1 / painter.scale(), border);
     }
 

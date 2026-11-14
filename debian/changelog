@@ -1,3 +1,9 @@
+lingmo-initial-setup (1.3.5+lingmo5u1) unstable; urgency=medium
+
+  * Reserve card-side space so option borders and checkmarks stay visible.
+
+ -- Lingmo OS Team <team@lingmo.org>  Sat, 15 Nov 2026 14:00:00 +0800
+
 lingmo-initial-setup (1.3.4+lingmo5u1) unstable; urgency=medium
 
   * Add Simplified Chinese translations for the initial setup interface.
