@@ -229,14 +229,13 @@ public:
     {
         setClipsChildren(false);
 
-        std::string wallpaper = m_appearance.wallpaper();
-        if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper))
-            wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
-        m_wallpaperImage = m_wallpaper->setContent<ImageView>(std::move(wallpaper));
+        m_wallpaperImage = m_wallpaper->setContent<ImageView>();
         m_wallpaperImage->setFillMode(ImageView::FillMode::PreserveAspectCrop);
         m_wallpaperImage->onStatusChanged = [this](ImageView::Status) {
             m_wallpaper->contentChanged();
         };
+        m_appearanceChanged = m_appearance.changed.connect([this] { updateWallpaper(); });
+        updateWallpaper();
     }
 
 protected:
@@ -253,6 +252,16 @@ protected:
     }
 
 private:
+    void updateWallpaper()
+    {
+        std::string wallpaper = m_appearance.wallpaper();
+        std::error_code error;
+        if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper, error))
+            wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
+        m_wallpaperImage->setSource(std::move(wallpaper));
+        m_wallpaper->contentChanged();
+    }
+
     class BackdropTint final : public View
     {
     protected:
@@ -264,6 +273,7 @@ private:
     };
 
     Lingmo::appearance::Appearance m_appearance;
+    base::Subscription m_appearanceChanged;
     FastBlurredCopy* m_wallpaper;
     BackdropTint* m_tint;
     ImageView* m_wallpaperImage = nullptr;
