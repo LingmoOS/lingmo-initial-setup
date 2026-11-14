@@ -4,14 +4,17 @@
 #include "oobewindow.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <functional>
 #include <memory>
 
 #include "base/paths.h"
+#include "lingmo/appearance/appearance.h"
 #include "ui/application.h"
 #include "ui/button.h"
 #include "ui/cell_layout.h"
 #include "ui/color_id.h"
+#include "ui/fast_blur.h"
 #include "ui/image_view.h"
 #include "ui/label.h"
 #include "ui/painter.h"
@@ -94,9 +97,21 @@ class OobeView final : public View
 public:
     OobeView(Label*& title, Label*& subtitle, ImageView*& logo, Button*& start,
              std::function<void()> onStart)
-        : m_card(addChild<WelcomeCard>(title, subtitle, logo, start, std::move(onStart)))
+        : m_appearance()
+        , m_wallpaper(addChild<FastBlurredCopy>(22))
+        , m_tint(addChild<BackdropTint>())
+        , m_card(addChild<WelcomeCard>(title, subtitle, logo, start, std::move(onStart)))
     {
         setClipsChildren(false);
+
+        std::string wallpaper = m_appearance.wallpaper();
+        if (wallpaper.empty() || !std::filesystem::is_regular_file(wallpaper))
+            wallpaper = "/usr/share/backgrounds/lingmoos/default.jpg";
+        m_wallpaperImage = m_wallpaper->setContent<ImageView>(std::move(wallpaper));
+        m_wallpaperImage->setFillMode(ImageView::FillMode::PreserveAspectCrop);
+        m_wallpaperImage->onStatusChanged = [this](ImageView::Status) {
+            m_wallpaper->contentChanged();
+        };
     }
 
 protected:
@@ -106,24 +121,27 @@ protected:
         const double margin = 48;
         const double cardWidth = std::min(960.0, std::max(0.0, bounds.width - 2 * margin));
         const double cardHeight = std::min(600.0, std::max(0.0, bounds.height - 2 * margin));
+        m_wallpaper->setGeometry(bounds);
+        m_tint->setGeometry(bounds);
         m_card->setGeometry({(bounds.width - cardWidth) / 2, (bounds.height - cardHeight) / 2,
                              cardWidth, cardHeight});
-
-        if (auto* surface = window()) {
-            // Keep the desktop wallpaper visible through the translucent
-            // surface, while asking the compositor to blur it behind OOBE.
-            surface->setBackgroundBlur(bounds, 0);
-            surface->setBackgroundGlass(std::nullopt);
-        }
-    }
-
-    void paint(Painter& painter) override
-    {
-        const Theme& theme = Theme::current();
-        painter.fillRect(localRect(), theme.background.withAlpha(theme.darkMode ? 0.28 : 0.14));
     }
 
 private:
+    class BackdropTint final : public View
+    {
+    protected:
+        void paint(Painter& painter) override
+        {
+            const Theme& theme = Theme::current();
+            painter.fillRect(localRect(), theme.background.withAlpha(theme.darkMode ? 0.28 : 0.14));
+        }
+    };
+
+    Lingmo::appearance::Appearance m_appearance;
+    FastBlurredCopy* m_wallpaper;
+    BackdropTint* m_tint;
+    ImageView* m_wallpaperImage = nullptr;
     WelcomeCard* m_card;
 };
 

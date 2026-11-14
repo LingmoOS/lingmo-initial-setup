@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(lingmo-oobe VERSION 1.0.3 LANGUAGES CXX)
+project(lingmo-oobe VERSION 1.0.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,6 +10,7 @@ include(GNUInstallDirs)
 include(CTest)
 
 find_package(LingmoSDK REQUIRED)
+find_package(LingmoClients REQUIRED COMPONENTS appearance)
 
 set(OOBE_DATA_DIR ${CMAKE_INSTALL_FULL_DATADIR}/lingmo-oobe CACHE PATH
     "OOBE installed data directory")
@@ -20,7 +21,7 @@ add_executable(lingmo-oobe
 )
 target_include_directories(lingmo-oobe PRIVATE src)
 target_compile_definitions(lingmo-oobe PRIVATE OOBE_DATA_DIR="${OOBE_DATA_DIR}")
-target_link_libraries(lingmo-oobe PRIVATE Lingmo::SDK)
+target_link_libraries(lingmo-oobe PRIVATE Lingmo::SDK Lingmo::AppearanceClient)
 
 install(TARGETS lingmo-oobe RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES data/lingmo-oobe.desktop
