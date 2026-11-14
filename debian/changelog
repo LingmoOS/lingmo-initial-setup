@@ -1,3 +1,9 @@
+lingmo-oobe (1.1.1+lingmo1) unstable; urgency=medium
+
+  * Declare the framework dependency required by the appearance client.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 06:00:00 +0800
+
 lingmo-oobe (1.1.0+lingmo1) unstable; urgency=medium
 
   * Add a multi-page first-run setup flow with themed primary actions.
