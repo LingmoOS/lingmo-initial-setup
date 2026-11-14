@@ -475,8 +475,10 @@ private:
         m_english = language->addChild<ChoiceCard>("applications-education-language", "English (United States)",
                                                     "Use English throughout the desktop");
         m_chinese = language->addChild<ChoiceCard>("globe", "中文（简体）", "使用简体中文显示系统界面");
-        m_english->setLayoutHints({.fillWidth = true, .preferredHeight = 48});
-        m_chinese->setLayoutHints({.fillWidth = true, .preferredHeight = 48});
+        m_english->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
+                                   .verticalAlignment = Alignment::Start});
+        m_chinese->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
+                                   .verticalAlignment = Alignment::Start});
         m_english->setSelected(true);
         m_english->onClicked = [this] { selectLanguage(m_english); };
         m_chinese->onClicked = [this] { selectLanguage(m_chinese); };
@@ -486,8 +488,10 @@ private:
         m_usKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "English (US)",
                                                        "QWERTY keyboard layout");
         m_pinyinKeyboard = keyboard->addChild<ChoiceCard>("input-keyboard", "中文拼音", "Chinese Pinyin input");
-        m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48});
-        m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48});
+        m_usKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
+                                      .verticalAlignment = Alignment::Start});
+        m_pinyinKeyboard->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
+                                          .verticalAlignment = Alignment::Start});
         m_usKeyboard->setSelected(true);
         m_usKeyboard->onClicked = [this] { selectKeyboard(m_usKeyboard); };
         m_pinyinKeyboard->onClicked = [this] { selectKeyboard(m_pinyinKeyboard); };
@@ -513,8 +517,10 @@ private:
                                                               "Bright surfaces with clear contrast");
         m_darkAppearance = appearance->addChild<ChoiceCard>("zorin-appearance", "Dark appearance",
                                                              "A darker palette for dim environments");
-        m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48});
-        m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48});
+        m_lightAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
+                                           .verticalAlignment = Alignment::Start});
+        m_darkAppearance->setLayoutHints({.fillWidth = true, .preferredHeight = 48, .maximumHeight = 48,
+                                          .verticalAlignment = Alignment::Start});
         m_lightAppearance->onClicked = [this] { chooseAppearance(false); };
         m_darkAppearance->onClicked = [this] { chooseAppearance(true); };
         updateAppearanceChoices();
