@@ -1,3 +1,9 @@
+lingmo-oobe (1.0.2+lingmo1) unstable; urgency=medium
+
+  * Restore the setup card layout so its controls receive pointer input.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 04:45:00 +0800
+
 lingmo-oobe (1.0.1+lingmo1) unstable; urgency=medium
 
   * Use a full-screen backdrop with a centered glass setup card.

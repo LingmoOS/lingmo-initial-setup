@@ -34,18 +34,18 @@ public:
         setClipsChildren(true);
         setChildClipRadius(Theme::current().windowRadius);
 
-        auto* row = addChild<RowLayout>();
-        row->setLayoutHints({.fillWidth = true, .fillHeight = true});
-        row->setPadding({56, 48, 56, 48});
-        row->setSpacing(48);
+        m_row = addChild<RowLayout>();
+        m_row->setLayoutHints({.fillWidth = true, .fillHeight = true});
+        m_row->setPadding({56, 48, 56, 48});
+        m_row->setSpacing(48);
 
-        logo = row->addChild<ImageView>(std::string(OOBE_DATA_DIR) + "/images/logo.svg");
+        logo = m_row->addChild<ImageView>(std::string(OOBE_DATA_DIR) + "/images/logo.svg");
         logo->setFillMode(ImageView::FillMode::PreserveAspectFit);
         logo->setCornerRadius(28, themeCorners());
         logo->setLayoutHints({.preferredWidth = 236, .preferredHeight = 236,
                               .verticalAlignment = Alignment::Center});
 
-        auto* column = row->addChild<ColumnLayout>();
+        auto* column = m_row->addChild<ColumnLayout>();
         column->setLayoutHints({.fillWidth = true, .fillHeight = true,
                                 .horizontalAlignment = Alignment::Start});
         column->setSpacing(Theme::current().largeSpacing);
@@ -69,6 +69,11 @@ public:
     }
 
 protected:
+    void layout() override
+    {
+        m_row->setGeometry(localRect());
+    }
+
     void paint(Painter& painter) override
     {
         const Theme& theme = Theme::current();
@@ -80,6 +85,9 @@ protected:
                                     theme.windowRadius, Color::rgb(0x000000).withAlpha(0), 1,
                                     theme.text.withAlpha(theme.darkMode ? 0.08 : 0.12));
     }
+
+private:
+    RowLayout* m_row = nullptr;
 };
 
 class OobeView final : public View
