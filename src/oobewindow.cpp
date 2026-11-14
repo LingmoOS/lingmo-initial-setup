@@ -104,7 +104,8 @@ protected:
         const RectF bounds = localRect();
         for (View* page : m_pages) {
             const double height = std::min(bounds.height, page->heightForWidth(bounds.width));
-            page->setGeometry({0, 0, bounds.width, std::max(0.0, height)});
+            page->setGeometry({0, std::max(0.0, (bounds.height - height) / 2), bounds.width,
+                               std::max(0.0, height)});
         }
     }
 
@@ -462,7 +463,7 @@ private:
     static std::unique_ptr<ColumnLayout> page(std::string text)
     {
         auto result = std::make_unique<ColumnLayout>();
-        result->setSpacing(0);
+        result->setSpacing(10);
         auto* body = result->addChild<Label>(std::move(text));
         body->setWrap(true);
         body->setMaximumLineCount(3);

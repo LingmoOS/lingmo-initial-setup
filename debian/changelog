@@ -1,3 +1,9 @@
+lingmo-oobe (1.2.8+lingmo1) unstable; urgency=medium
+
+  * Center page content and restore balanced wizard spacing.
+
+ -- LingmoOS Contributors <contributors@lingmo.org>  Sat, 15 Nov 2026 11:05:00 +0800
+
 lingmo-oobe (1.2.7+lingmo1) unstable; urgency=medium
 
   * Lay out wizard pages at content height to keep option cards adjacent.
