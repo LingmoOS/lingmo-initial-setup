@@ -15,7 +15,6 @@
 #include "ui/image_view.h"
 #include "ui/label.h"
 #include "ui/painter.h"
-#include "ui/popup_glass.h"
 #include "ui/theme.h"
 #include "ui/view.h"
 
@@ -111,15 +110,10 @@ protected:
                              cardWidth, cardHeight});
 
         if (auto* surface = window()) {
-            const Theme& theme = Theme::current();
+            // Keep the desktop wallpaper visible through the translucent
+            // surface, while asking the compositor to blur it behind OOBE.
             surface->setBackgroundBlur(bounds, 0);
-            if (surface->backgroundGlassAvailable()) {
-                auto glass = popupGlass(theme.darkMode);
-                glass.blurSigma = 10;
-                glass.displacement = 0;
-                glass.tintAlpha = theme.darkMode ? 0.16 : 0.10;
-                surface->setBackgroundGlass(glass);
-            }
+            surface->setBackgroundGlass(std::nullopt);
         }
     }
 
