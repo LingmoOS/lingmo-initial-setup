@@ -4,6 +4,7 @@
 #include "oobewindow.h"
 
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -13,6 +14,7 @@
 #include "base/paths.h"
 #include "lingmo/appearance/appearance.h"
 #include "ui/application.h"
+#include "ui/animation.h"
 #include "ui/cell_layout.h"
 #include "ui/check_box.h"
 #include "ui/dialog_window.h"
@@ -33,6 +35,11 @@ namespace {
 class PageStack final : public View
 {
 public:
+    PageStack()
+    {
+        setClipsChildren(true);
+    }
+
     View* addPage(std::unique_ptr<View> page)
     {
         View* result = page.get();
@@ -46,11 +53,48 @@ public:
     {
         if (index >= m_pages.size())
             return;
+        if (index == m_current && m_hasCurrent)
+            return;
+
+        stopTransition();
+        if (!m_hasCurrent) {
+            m_current = index;
+            m_hasCurrent = true;
+            for (size_t i = 0; i < m_pages.size(); ++i) {
+                m_pages[i]->setVisible(i == m_current);
+                m_pages[i]->setOpacity(i == m_current ? 1 : 0);
+                m_pages[i]->setTransform({});
+            }
+            return;
+        }
+
+        View* previous = m_pages[m_current];
+        View* next = m_pages[index];
+        const double direction = index > m_current ? 1 : -1;
         m_current = index;
-        for (size_t i = 0; i < m_pages.size(); ++i)
-            m_pages[i]->setVisible(i == m_current);
+        next->setVisible(true);
+        next->setOpacity(0);
+        next->setTransform({{direction * 36, 0}, 1});
+        raiseChild(next);
         requestLayout();
         requestPaint();
+
+        if (!window()) {
+            finishTransition(previous, next);
+            return;
+        }
+
+        m_transition = std::make_unique<Animation>(window());
+        m_transition->setDuration(std::chrono::milliseconds(260));
+        m_transition->setEasing(Animation::Easing::OutCubic);
+        m_transition->onUpdate = [this, previous, next, direction](double value) {
+            previous->setOpacity(1 - value);
+            previous->setTransform({{-direction * 36 * value, 0}, 1});
+            next->setOpacity(value);
+            next->setTransform({{direction * 36 * (1 - value), 0}, 1});
+        };
+        m_transition->onFinished = [this, previous, next] { finishTransition(previous, next); };
+        m_transition->start();
     }
 
 protected:
@@ -61,8 +105,36 @@ protected:
     }
 
 private:
+    void stopTransition()
+    {
+        if (!m_transition)
+            return;
+        m_transition->stop();
+        m_transition.reset();
+        for (View* page : m_pages) {
+            page->setVisible(false);
+            page->setOpacity(1);
+            page->setTransform({});
+        }
+        if (m_hasCurrent)
+            m_pages[m_current]->setVisible(true);
+    }
+
+    void finishTransition(View* previous, View* next)
+    {
+        previous->setVisible(false);
+        previous->setOpacity(1);
+        previous->setTransform({});
+        next->setVisible(true);
+        next->setOpacity(1);
+        next->setTransform({});
+        requestPaint();
+    }
+
     std::vector<View*> m_pages;
     size_t m_current = 0;
+    bool m_hasCurrent = false;
+    std::unique_ptr<Animation> m_transition;
 };
 
 class PageVisual final : public View
@@ -86,13 +158,35 @@ public:
 
     void setPage(size_t page)
     {
+        if (page == m_page)
+            return;
         static constexpr const char* icons[] = {
             "", "preferences-desktop-locale", "preferences-desktop-appearance", "emblem-checked"};
-        m_wallpaper->setVisible(page == 0);
-        m_icon->setVisible(page != 0);
+        View* oldView = m_page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
+        View* newView = page == 0 ? static_cast<View*>(m_wallpaper) : static_cast<View*>(m_icon);
+        m_page = page;
+        if (m_transition)
+            m_transition->stop();
+        m_transition.reset();
+        oldView->setVisible(true);
+        oldView->setOpacity(1);
         if (page != 0)
             m_icon->setIconName(icons[std::min(page, size_t(3))]);
-        requestPaint();
+        newView->setVisible(true);
+        newView->setOpacity(0);
+        if (!window()) {
+            finishTransition(oldView, newView);
+            return;
+        }
+        m_transition = std::make_unique<Animation>(window());
+        m_transition->setDuration(std::chrono::milliseconds(220));
+        m_transition->setEasing(Animation::Easing::InOutCubic);
+        m_transition->onUpdate = [oldView, newView](double value) {
+            oldView->setOpacity(1 - value);
+            newView->setOpacity(value);
+        };
+        m_transition->onFinished = [this, oldView, newView] { finishTransition(oldView, newView); };
+        m_transition->start();
     }
 
 protected:
@@ -112,8 +206,20 @@ protected:
     }
 
 private:
+    void finishTransition(View* oldView, View* newView)
+    {
+        if (oldView != newView)
+            oldView->setVisible(false);
+        oldView->setOpacity(1);
+        newView->setVisible(true);
+        newView->setOpacity(1);
+        requestPaint();
+    }
+
     ImageView* m_wallpaper;
     ThemeIcon* m_icon;
+    size_t m_page = 0;
+    std::unique_ptr<Animation> m_transition;
 };
 
 class SetupCard final : public View
