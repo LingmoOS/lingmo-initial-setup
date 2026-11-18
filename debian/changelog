@@ -1,3 +1,9 @@
+lingmo-initial-setup (1.3.8+lingmo5u1) unstable; urgency=medium
+
+  * Remove the initial setup desktop entries after completing OOBE.
+
+ -- Lingmo OS Team <team@lingmo.org>  Tue, 17 Nov 2026 01:10:00 +0800
+
 lingmo-initial-setup (1.3.7+lingmo5u1) unstable; urgency=medium
 
   * Remove generated Debian build metadata from the source tree.
